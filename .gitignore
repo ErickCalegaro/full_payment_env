@@ -1,0 +1,23 @@
+# These are some examples of commonly ignored file patterns.
+# You should customize this list as applicable to your project.
+# Learn more about .gitignore:
+#     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+
+# ISO Module Files 
+ISM/ism
+
+# Comunicator Files
+CM_TCP/cm_tcp
+
+# Public Files and logs
+PUB/log_cm.txt
+PUB/log_ism.txt
+
+# Test applications
+TEST/test_cm_tcp_online
+TEST/test_cm_tcp_local
+TEST/test_ism_online
+TEST/test_ism_local
+
+# HSM Binary Files 
+HSM/hsm
