@@ -1,5 +1,67 @@
 char  g_zList[100][1024];
 int   g_listSize = 0;
+char  buffer[MAX_MSG];
+
+int util_log_Append(char *data)
+{
+    FILE *fd;
+    char zName[64] = {0x00};
+    int  i;
+
+    sprintf(zName, "%s", LOG_PATH);
+    fd = fopen(zName, "a+");
+
+    if(!fd){
+        printf("ERRO CRIACAO DO ARQUIVO [%s]\n", zName);
+        return(-1);
+    }
+
+    for(i = 0; data[i]; i++)
+        fputc(data[i], fd);
+
+    fclose(fd);
+
+    return(0);
+}
+
+void util_logger(int level, char * file, int line, const char *fmt, ...)
+{
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    char sLevel[16] = {0x00};
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, ap);
+    va_end(ap);
+
+    switch(level){
+        case LOG_DEBUG: strcpy(sLevel, "DEBUG");  break;
+        case LOG_INFO:  strcpy(sLevel, "INFO ");  break;
+        case LOG_WARN:  strcpy(sLevel, "WARN ");  break;
+        case LOG_ERROR: strcpy(sLevel, "ERROR");  break;
+        default:
+        case LOG_FATAL: strcpy(sLevel, "FATAL");  break;
+            break;
+    }
+
+#if LOG_FILE
+    //!TODO: Logica para apagar o log após x dias
+    char output[MAX_MSG] = {0x00};
+    sprintf(output, "[%04d-%02d-%02d %02d:%02d:%02d] [%s] %s:%d - %s\n", 
+            tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            sLevel, &file[6], line, buffer);
+    util_log_Append(output);
+#else
+    printf("[%04d-%02d-%02d %02d:%02d:%02d] [%s] %s:%d - %s\n", 
+            tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            sLevel, &file[6], line, buffer);
+#endif
+
+}
+
 
 int util_ConvertToDecimal_Header(char *msg)
 {
@@ -10,7 +72,7 @@ int util_ConvertToDecimal_Header(char *msg)
 
     decimal = atoi(size);
 
-    printf("Size HEADER: size = [%s] decimal = [%d]\n", size, decimal);
+    TRACE_DEBUG("Size HEADER: size = [%s] decimal = [%d]", size, decimal);
 
     return(decimal);
 }
@@ -47,10 +109,10 @@ void util_Convert_HexaToBin(char h[], char *result)
         if (h[i] == 'F')  {result[id]   = '1'; result[id+1] = '1'; result[id+2] = '1'; result[id+3] = '1'; id += 4;}
     }
 
-    printf("DUMP BITMAP = [%s]\n", h);
-    printf("DUMP BITMAP = [%s]\n", result);
+    TRACE_DEBUG("DUMP BITMAP = [%s]", h);
+    TRACE_DEBUG("DUMP BITMAP = [%s]", result);
     for (int i = 0; i <= 128; ++i){
-        printf("POS[%d] = {%c}\n", i+1, result[i]);
+        TRACE_DEBUG("POS[%d] = {%c}", i+1, result[i]);
     }
 
     return;
@@ -97,8 +159,8 @@ int util_ConvertStrigToHexa(char * string, char * hexa)
 
     sizeFinal = strlen(hexa);
 
-    printf("string(%d) = [%s]\n", sizeInitial, string);
-    printf("hexa(%d) = [%s]\n", sizeFinal, hexa);
+    TRACE_DEBUG("string(%d) = [%s]", sizeInitial, string);
+    TRACE_DEBUG("hexa(%d) = [%s]", sizeFinal, hexa);
 
     return sizeFinal;
 }
@@ -117,8 +179,8 @@ int util_ConvertHexaToString(char * hexa, char * string)
 
     sizeFinal = strlen(hexa);
 
-    printf("string(%d) = [%s]\n", sizeInitial, string);
-    printf("hexa(%d) = [%s]\n", sizeFinal, hexa);
+    TRACE_DEBUG("string(%d) = [%s]", sizeInitial, string);
+    TRACE_DEBUG("hexa(%d) = [%s]", sizeFinal, hexa);
 
     return sizeFinal;
 }
@@ -190,7 +252,7 @@ void util_String_Substring(const char source[], int init, int length, char outpu
       i++;
    }
    output[i] = '\0';
-   // printf("util_String_Substring [%s]\n", output);
+   TRACE_DEBUG("util_String_Substring [%s]", output);
    return;
 }
 
@@ -241,9 +303,9 @@ int util_String_MountTLV(int inputId, char *inputData, char *output)
     strcat (zFmt, zAUX);
     strcat (zFmt, inputData);
 
-    // printf("TAG [%s]\n", zFmt);
-    // printf("LEN [%s]\n", zAUX);
-    // printf("VAL [%s]\n", inputData);
+    TRACE_DEBUG("TAG [%s]", zFmt);
+    TRACE_DEBUG("LEN [%s]", zAUX);
+    TRACE_DEBUG("VAL [%s]", inputData);
 
     strcat (output, zFmt);
 
@@ -275,13 +337,13 @@ void util_String_DumpStringLog(char *input, int charPerLine)
 
         if(iCounter >= charPerLine)
         {
-            printf("       >>(%03d) |   [%s]   |\n", (int)strlen(buffDBG), buffDBG);
+            TRACE_DEBUG("       >>(%03d) |   [%s]   |", (int)strlen(buffDBG), buffDBG);
             iCounter = 0;
             memset(buffDBG, 0x00, sizeof(buffDBG));
         }
     }
 
-    printf("       >>(%03d) |   [%s]   |\n", (int)strlen(buffDBG), buffDBG);
+    TRACE_DEBUG("       >>(%03d) |   [%s]   |", (int)strlen(buffDBG), buffDBG);
 
     return;
 }
@@ -426,7 +488,7 @@ int util_getNumberOfTables(char * timestamp)
     arq = fopen(filePath,"r");
 
     if(arq == NULL){
-        printf("Erro na abertura do arquivo!\n");
+        TRACE_DEBUG("Erro na abertura do arquivo!");
         return 0;
     }
 
@@ -520,7 +582,7 @@ int util_TableReadToList(char * timestamp)
         if(strlen(zRead) > 0)
         {
             util_String_RemoveNewLine(zRead, zBuff);
-            printf("zBuff = [%s]\n", zBuff);
+            TRACE_DEBUG("zBuff = [%s]", zBuff);
 
             if(count < 100)
             {
@@ -564,7 +626,7 @@ int util_tableSerialization(int * currIndex, char * output)
             break;
 
         sprintf(zAux, "%03d%s", *currIndex, g_zList[*currIndex]);
-        printf("g_zList[%d] = [%s]\n", *currIndex, g_zList[*currIndex]);
+        TRACE_DEBUG("g_zList[%d] = [%s]", *currIndex, g_zList[*currIndex]);
         strcat(plainTable, zAux);
         (*currIndex)++;
     }
@@ -590,7 +652,7 @@ int util_sendDataToHSM(char * psKSN, char * psPINBlock, char * psDataEnc)
     // Criação do socket do ISM
     commSocketHSM = socket(AF_INET, SOCK_STREAM, 0);
     if (commSocketHSM == -1) {
-        perror("Erro ao criar o socket do cliente");
+        TRACE_FATAL("Erro ao criar o socket do cliente");
         return 0;
     }
 
@@ -598,14 +660,14 @@ int util_sendDataToHSM(char * psKSN, char * psPINBlock, char * psDataEnc)
     serverAddrHSM.sin_family = AF_INET;
     serverAddrHSM.sin_port = htons(HSM_PORT);
     if (inet_pton(AF_INET, LOCALHOST, &serverAddrHSM.sin_addr) <= 0) {
-        perror("Erro ao configurar o endereço do HSM");
+        TRACE_FATAL("Erro ao configurar o endereço do HSM");
         close(commSocketHSM);
         return 0;
     }
 
     // Conecta-se ao HSM
     if (connect(commSocketHSM, (struct sockaddr *)&serverAddrHSM, sizeof(serverAddrHSM)) == -1) {
-        perror("Erro ao conectar ao HSM");
+        TRACE_FATAL("Erro ao conectar ao HSM");
         close(commSocketHSM);
         return 0;
     }
@@ -620,25 +682,25 @@ int util_sendDataToHSM(char * psKSN, char * psPINBlock, char * psDataEnc)
     bytesRead = recv(commSocketHSM, buffer, sizeof(buffer), 0);
 
     if (bytesRead == -1) {
-        perror("Erro ao receber dados do servidor");
+        TRACE_ERROR("Erro ao receber dados do servidor");
     } else if (bytesRead == 0) {
         // O servidor fechou a conexão
-        printf("O servidor fechou a conexão\n");
+        TRACE_ERROR("O servidor fechou a conexão");
     } else {
         // Imprime a resposta recebida
-        printf("Resposta do servidor: %.*s\n", (int)bytesRead, buffer);
+        TRACE_INFO("Resposta do servidor: %.*s", (int)bytesRead, buffer);
     }
 
     // Fecha o socket do HSM
     close(commSocketHSM);
 
     strncpy(password, &buffer[strlen(buffer) - 8], 8);
-    printf("password: [%s]\n", password);
+    TRACE_DEBUG("password: [%s]", password);
 
     int i = 0;
     for (; i < 8; i++) if (password[i] != ' ') break;
 
-    printf("password: [%s]\n", &password[i]);
+    TRACE_DEBUG("password: [%s]", &password[i]);
 
     // Impede senha com todos os digitos iguais
     if (password[i] == password[i+1] &&

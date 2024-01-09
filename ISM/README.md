@@ -26,5 +26,28 @@
 
 * Os logs deste serviço estão disponiveis em PUB/log_ism.txt
 
+## Hierarquia de Logs
+
+Para definir o nivel de log que deseja utilizar basta alterar o define "LOG_LEVEL" em header.h:91. 
+Os niveis disponiveis são os seguintes, sendo que números maiores contém também os logs dos menores.
+
+0. LOG_NONE - Não retornará nenhum log
+1. LOG_FATAL - Usado para erros que encerrem a execução da aplicação.
+2. LOG_ERROR - Usado para casos de erro de interpretação, porém recuperaveis.
+3. LOG_WARN - Usado para informações sobre memória e desempenho
+4. LOG_INFO - Usado para logs de conexão, input e output
+5. LOG_DEBUG - Usado para exibir todas as linhas de log na aplicação (parser, maker, etc...)
+
+* X = Presente no nivel da coluna
+
+| NIVEL | LOG_DEBUG | LOG_INFO  | LOG_WARN  | LOG_ERROR | LOG_FATAL | LOG_NONE  |
+| ----- | --------- | --------- | --------- | --------- | --------- | --------- |
+| NONE  |           |           |           |           |           |           |
+| DEBUG |     X     |           |           |           |           |           |
+| INFO  |     X     |     X     |           |           |           |           |
+| WARN  |     X     |     X     |     X     |           |           |           |
+| ERROR |     X     |     X     |     X     |     X     |           |           |
+| FATAL |     X     |     X     |     X     |     X     |     X     |           |
+
 ### Com quem posso falar? ###
 [Linkedin](https://www.linkedin.com/in/erick-calegaro/)

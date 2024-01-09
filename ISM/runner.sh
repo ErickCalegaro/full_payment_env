@@ -7,3 +7,4 @@ for ((;1;)); do
   sleep 1m
 done
 echo -e '\e[1;40;36mExecução Abortada!\e[m'
+ 

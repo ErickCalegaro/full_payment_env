@@ -10,14 +10,14 @@ ISM/ism
 CM_TCP/cm_tcp
 
 # Public Files and logs
-PUB/log_cm.txt
-PUB/log_ism.txt
+PUB/*.txt
 
 # Test applications
 TEST/test_cm_tcp_online
 TEST/test_cm_tcp_local
 TEST/test_ism_online
 TEST/test_ism_local
+TEST/test_hsm_local
 
 # HSM Binary Files 
 HSM/hsm

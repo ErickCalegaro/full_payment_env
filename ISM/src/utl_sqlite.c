@@ -43,7 +43,8 @@ static int callback(void *data, int argc, char **argv, char **azColName)
             alen++;
         }
         if ((flen + alen) > (select_final_size - 1)) {
-            return printf("Small buffer in select final");
+            TRACE_ERROR("Small buffer in select final");
+            return 0;
         }
         if (i == 0) {
             sprintf (select_final, "%s", argv[0] && argv[0][0] ? argv[0] : "NULL");
@@ -67,12 +68,7 @@ int db_sqLite_insert(const char *databank, const char *table, const char *fields
     char        sql[4096] = {0x00};;
     const char *data      = "Callback Called by Insert";
 
-
-
-    /*DEBUG*/printf("SQL INSERT FUNCTION");
-
-
-
+    TRACE_DEBUG("SQL INSERT FUNCTION");
 
     //	SANITY CHECK
 
@@ -81,7 +77,7 @@ int db_sqLite_insert(const char *databank, const char *table, const char *fields
     	fields   == NULL ||
     	values   == NULL)
     {
-    	/*DEBUG*/printf(">>> ERRO parametros invalidos em db_sqLite_insert <<<");
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_sqLite_insert <<<");
         return RC_ERR_PARAMETER_INVALID;
     }
 
@@ -91,7 +87,7 @@ int db_sqLite_insert(const char *databank, const char *table, const char *fields
 
 			if(rc != SQLITE_OK)
 			{
-				/*DEBUG*/printf(">>> ERRO ao abrir o banco de dados %s <<<", databank);
+				TRACE_ERROR(">>> ERRO ao abrir o banco de dados %s <<<", databank);
 
 				rc =	RC_ERR_NO_OPEN_DATA_BASE;
 						sqlite3_free	(zErrMsg);
@@ -105,10 +101,10 @@ int db_sqLite_insert(const char *databank, const char *table, const char *fields
     snprintf(sql, sizeof(sql) - 1, "INSERT INTO %s (%s) VALUES (%s)", table, fields, values);
 
 
-    /*DEBUG*/printf(" ");
-    /*DEBUG*/printf("QUERY INSERT:");
-    /*DEBUG*/printf("%s", sql);
-    /*DEBUG*/printf(" \n");
+    TRACE_DEBUG(" ");
+    TRACE_DEBUG("QUERY INSERT:");
+    TRACE_DEBUG("%s", sql);
+    TRACE_DEBUG(" ");
 
     //	EXECUTA INSERT
 
@@ -118,8 +114,8 @@ int db_sqLite_insert(const char *databank, const char *table, const char *fields
 			{
 				if(DBG_DEV > 0)
 				{
-					printf(">>> ERRO ao tentar inserir registro na tabela %s <<<", table);
-					printf(">>> ERRO = %d, %s", rc, zErrMsg);
+					TRACE_ERROR(">>> ERRO ao tentar inserir registro na tabela %s <<<", table);
+					TRACE_ERROR(">>> ERRO = %d, %s", rc, zErrMsg);
 				}
 
 				rc =	RC_ERR_NO_INSERT;
@@ -145,30 +141,21 @@ int db_sqLite_update (const char *databank, const char *table, const char *field
     char       sql[4096];
     const char *data = "Callback function called";
 
+	TRACE_DEBUG("SQL UPDATE FUNCTION");
+    
     //	SANITY CHECK
 
-    if (databank == NULL ||
-    	table    == NULL ||
-    	fields   == NULL)
-    {
-    	if(DEV == 1)
-    	{
-    		printf(">>> ERRO parametros invalidos em db_sqLite_update <<<");
-    	}
+    if (databank == NULL || table    == NULL || fields   == NULL){
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_sqLite_update <<<");
         return RC_ERR_PARAMETER_INVALID;
-    }
-
+    }	
 
     //	ABRE O DATABASE
-
     rc =	/*sqlite3_open(databank, &db);*/sqlite3_open_v2(databank, &db, SQLITE_OPEN_READWRITE, NULL);
 
 			if(rc != SQLITE_OK)
 			{
-				if(DEV == 1)
-				{
-					printf(">>> ERRO ao abrir o banco de dados %s <<<", databank);
-				}
+				TRACE_ERROR(">>> ERRO ao abrir o banco de dados %s <<<", databank);
 
 				rc =	RC_ERR_NO_OPEN_DATA_BASE;
 						sqlite3_free	(zErrMsg);
@@ -187,10 +174,7 @@ int db_sqLite_update (const char *databank, const char *table, const char *field
         snprintf(sql, sizeof(sql) - 1, "UPDATE %s SET %s", table, fields);
     }
 
-    if(DEV == 1)
-    {
-    	printf("[%s]", sql);
-    }
+    TRACE_DEBUG("[%s]", sql);
 
     //	EXECUTA SQL STATEMENT
 
@@ -198,11 +182,8 @@ int db_sqLite_update (const char *databank, const char *table, const char *field
 
 			if(rc != SQLITE_OK)
 			{
-				if(DEV == 1)
-				{
-					printf(">>> ERRO ao tentar atualizar registro na tabela %s <<<", table);
-					printf(">>> ERRO = %d, %s", rc, zErrMsg);
-				}
+				TRACE_ERROR(">>> ERRO ao tentar atualizar registro na tabela %s <<<", table);
+				TRACE_ERROR(">>> ERRO = %d, %s", rc, zErrMsg);
 
 				rc =	RC_ERR_NO_UPDATE;
 						sqlite3_free	(zErrMsg);
@@ -242,27 +223,20 @@ int db_sqLite_get_txt(const char *databank, const char *table, const char *field
     char	      zRes     [512] = {0x00};
     char          sqlQuery[4096] = {0x00};
 
-
+	TRACE_DEBUG("SQL GET TXT FUNCTION");
 
     //	SANITY CHECK
-
-    if (databank  == NULL ||
-    	table     == NULL ||
-    	fields    == NULL ||
-    	condition == NULL)
-    {
-    	/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - PARAMETRO INVALIDO");
+    if (databank  == NULL || table     == NULL || fields    == NULL || condition == NULL){
+    	TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - PARAMETRO INVALIDO");
         return(RC_ERR_PARAMETER_INVALID);
     }
 
-
     //	ABRE O DATABASE E RESETA QUALQUER STATEMENT (PARA CORRIGIR DB_CLOSE() VOLTANDO BUSY)
-
     rc =	sqlite3_open_v2(databank, &db, SQLITE_OPEN_READONLY, NULL);
 
 			if(rc != SQLITE_OK)
 			{
-				/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - ABERTURA BANCO DE DADOS [%s]", databank);
+				TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - ABERTURA BANCO DE DADOS [%s]", databank);
 
 				rc =	RC_ERR_NO_OPEN_DATA_BASE;
 						sqlite3_finalize(stmt);
@@ -274,7 +248,7 @@ int db_sqLite_get_txt(const char *databank, const char *table, const char *field
 
     snprintf(sqlQuery, sizeof(sqlQuery) - 1, "SELECT %s FROM %s WHERE %s LIMIT 1", fields, table, condition);
 
-    // /*DEBUG*/printf("QUERY: [%s]\n", sqlQuery);
+    TRACE_DEBUG("QUERY: [%s]", sqlQuery);
 
     //	EXECUTA STATEMENT
 
@@ -282,7 +256,7 @@ int db_sqLite_get_txt(const char *databank, const char *table, const char *field
 
 			if(rc != SQLITE_OK)
 			{
-				/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - SELECAO DE REGISTRO NA TABELA [%s]", table);
+				TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - SELECAO DE REGISTRO NA TABELA [%s]", table);
 
 				rc =	RC_ERR_NO_SELECT;
 						sqlite3_finalize(stmt);
@@ -296,7 +270,7 @@ int db_sqLite_get_txt(const char *databank, const char *table, const char *field
 
 			if(nCol <= 0)
 			{
-				/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - NENHUMA COLUNA ENCONTRADA NA TABELA [%s]", table);
+				TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - NENHUMA COLUNA ENCONTRADA NA TABELA [%s]", table);
 
 				rc =	RC_ERR_NO_COLUNS;
 						sqlite3_finalize(stmt);
@@ -314,7 +288,7 @@ int db_sqLite_get_txt(const char *databank, const char *table, const char *field
 
 	if(count <= 0)
 	{
-		/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - NENHUM REGISTRO ENCONTRADO");
+		TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - NENHUM REGISTRO ENCONTRADO");
 
 		rc =	RC_ERR_NO_REG;
 				sqlite3_finalize(stmt);
@@ -324,11 +298,11 @@ int db_sqLite_get_txt(const char *databank, const char *table, const char *field
 
 		strncpy(output, zRes, output_size);
 
-		/*DEBUG*/
-		// if(strlen(zRes) > 0)
-			// /*DEBUG*/printf("RESP : |%s|\n", zRes);
-		// else
-			// /*DEBUG*/printf("RESP : |**NENHUM DADO NA RESPOSTA**|\n");
+		
+		if(strlen(zRes) > 0)
+			TRACE_DEBUG("RESP : |%s|", zRes);
+		else
+			TRACE_DEBUG("RESP : |**NENHUM DADO NA RESPOSTA**|");
 
 	sqlite3_finalize(stmt);
     sqlite3_close_v2(db);
@@ -340,7 +314,7 @@ int db_sqLite_get_txt(const char *databank, const char *table, const char *field
 
 int db_sqLite_get_int(const char *databank, const char *table, const char *fields, const char *condition, int *output)
 {
-	printf("********************** %s **********************", __FUNCTION__);
+	TRACE_DEBUG("********************** %s **********************", __FUNCTION__);
     int          rc         = RC_OK;
     int          num_cols   = 0;
     int          counter    = 0;
@@ -350,30 +324,20 @@ int db_sqLite_get_int(const char *databank, const char *table, const char *field
     sqlite3_stmt *stmt;
     char         sql[4096];
 
-    //	SANITY CHECK
+	TRACE_DEBUG("SQL GET INT FUNCTION");
 
-    if (databank  == NULL ||
-    	table     == NULL ||
-    	fields    == NULL ||
-    	condition == NULL)
-    {
-    	if(DEV == 1)
-    	{
-    		printf(">>> ERRO parametros invalidos em db_sqLite_get_int <<<");
-    	}
+    //	SANITY CHECK
+    if (databank  == NULL || table     == NULL || fields    == NULL || condition == NULL){
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_sqLite_get_int <<<");
         return RC_ERR_PARAMETER_INVALID;
     }
 
     //	ABRE O DATABASE E RESETA QUALQUER STATEMENT (PARA CORRIGIR DB_CLOSE() VOLTANDO BUSY)
-
     rc = sqlite3_open_v2(databank, &db, SQLITE_OPEN_READONLY, NULL);
 
 	if(rc != SQLITE_OK)
 	{
-		if(DEV == 1)
-		{
-			printf(">>> ERRO ao abrir o banco de dados %s <<<", databank);
-		}
+		TRACE_ERROR(">>> ERRO ao abrir o banco de dados %s <<<", databank);
 
 		rc =	RC_ERR_NO_OPEN_DATA_BASE;
 				sqlite3_finalize	(stmt);
@@ -385,10 +349,7 @@ int db_sqLite_get_int(const char *databank, const char *table, const char *field
 
     snprintf(sql, sizeof(sql) - 1, "SELECT %s FROM %s WHERE %s LIMIT 1", fields, table, condition);
 
-    if(DEV == 1)
-    {
-    	// printf("[%s]", sql);
-    }
+    TRACE_DEBUG("[%s]", sql);
 
     //	EXECUTA SQL STATEMENT
 
@@ -396,10 +357,7 @@ int db_sqLite_get_int(const char *databank, const char *table, const char *field
 
 	if(rc != SQLITE_OK)
 	{
-		if (DEV == 1)
-		{
-			printf(">>> ERROR ao selecionar resgistro da tabela %s <<<", table);
-		}
+		TRACE_ERROR(">>> ERROR ao selecionar resgistro da tabela %s <<<", table);
 
 		rc =	RC_ERR_NO_SELECT;
 				sqlite3_finalize(stmt);
@@ -413,10 +371,7 @@ int db_sqLite_get_int(const char *databank, const char *table, const char *field
 
 	if(num_cols <= 0)
 	{
-		if(DEV == 1)
-		{
-			printf(">>> ERRO nenhuma coluna a exibir na tabela %s", table);
-		}
+		TRACE_ERROR(">>> ERRO nenhuma coluna a exibir na tabela %s", table);
 
 		rc =	RC_ERR_NO_COLUNS;
 				sqlite3_finalize(stmt);
@@ -434,10 +389,7 @@ int db_sqLite_get_int(const char *databank, const char *table, const char *field
 
 	if(counter <= 0)
 	{
-		if(DEV == 1)
-		{
-			printf(">>> ERRO nenhum registro encontrado <<<");
-		}
+		TRACE_ERROR(">>> ERRO nenhum registro encontrado <<<");
 
 		rc =	RC_ERR_NO_REG;
 				sqlite3_finalize(stmt);
@@ -465,18 +417,13 @@ int db_sqLite_delete(const char *databank, const char *table, const char *condit
     const char *data    = "Callback function called";
     sqlite3    *db      = NULL;
 
-    /*DEBUG*/printf("SQL DELETE FUNCTION");
+    TRACE_DEBUG("SQL DELETE FUNCTION");
 
     //	SANITY CHECK
 
-    if (databank  == NULL ||
-    	table     == NULL ||
-    	condition == NULL)
-    {
-    	/*DEBUG*/printf("ERRO parametros invalidos em db_sqLite_delete <<<");
-
+    if (databank  == NULL || table     == NULL || condition == NULL){
+    	TRACE_ERROR("ERRO parametros invalidos em db_sqLite_delete <<<");
         return RC_ERR_PARAMETER_INVALID;
-
     }
 
     //	ABRE O DATABASE
@@ -485,7 +432,7 @@ int db_sqLite_delete(const char *databank, const char *table, const char *condit
 
 				if(rc != SQLITE_OK)
 				{
-					/*DEBUG*/printf(">>> ERRO ao abrir o banco de dados %s <<<", databank);
+					TRACE_ERROR(">>> ERRO ao abrir o banco de dados %s <<<", databank);
 
 					rc = RC_ERR_NO_OPEN_DATA_BASE;
 					goto exit_func;
@@ -495,10 +442,10 @@ int db_sqLite_delete(const char *databank, const char *table, const char *condit
 
     snprintf(sql, sizeof(sql) - 1, "DELETE FROM %s WHERE %s", table, condition);
 
-    /*DEBUG*/printf(" ");
-    /*DEBUG*/printf("QUERY DELETE:");
-    /*DEBUG*/printf("%s", sql);
-    /*DEBUG*/printf(" \n");
+    TRACE_DEBUG(" ");
+    TRACE_DEBUG("QUERY DELETE:");
+    TRACE_DEBUG("%s", sql);
+    TRACE_DEBUG(" ");
 
     //	EXECUTA O DELETE
 
@@ -506,11 +453,8 @@ int db_sqLite_delete(const char *databank, const char *table, const char *condit
 
 			if(rc != SQLITE_OK)
 			{
-				if (DEV == 1)
-				{
-					printf(">>> ERRO ao tentar deletar registro na tabela %s <<<", table);
-					printf(">>> ERRO = %d, %s", rc, zErrMsg);
-				}
+				TRACE_ERROR(">>> ERRO ao tentar deletar registro na tabela %s <<<", table);
+				TRACE_ERROR(">>> ERRO = %d, %s", rc, zErrMsg);
 
 				rc = RC_ERR_NO_DELETE;
 				goto exit_func;
@@ -543,14 +487,13 @@ int db_exec_sql(const char *databank, char *query)
     char       *zErrMsg = 0;
     sqlite3    *db = NULL;
 
+	TRACE_DEBUG("SQL EXEC FUNCTION");
+    
     //	SANITY CHECK
 
     if((databank == NULL) || (strcmp(query,"") == 0))
     {
-    	if (DEV == 1)
-    	{
-    		printf(">>> ERRO parametros invalidos em db_exec_sql <<<");
-    	}
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_exec_sql <<<");
         return RC_ERR_PARAMETER_INVALID;
     }
 
@@ -560,10 +503,7 @@ int db_exec_sql(const char *databank, char *query)
 
 				if(rc != SQLITE_OK)
 				{
-					if(DEV == 1)
-					{
-						printf(">>> ERRO ao abrir o banco de dados %s <<<", databank);
-					}
+					TRACE_ERROR(">>> ERRO ao abrir o banco de dados %s <<<", databank);
 
 					rc = RC_ERR_NO_OPEN_DATA_BASE;
 					goto exit_func;
@@ -573,7 +513,7 @@ int db_exec_sql(const char *databank, char *query)
 
     snprintf(sql, sizeof(sql) - 1, "%s", query);
 
-	printf("[%s]\n", sql);
+	TRACE_DEBUG("[%s]", sql);
 
     //	EXECUTA QUERY
 
@@ -581,10 +521,7 @@ int db_exec_sql(const char *databank, char *query)
 
 			if(rc != SQLITE_OK)
 			{
-				if(DEV == 1)
-				{
-					printf("Failed in exec SQL: %s, -%d", zErrMsg, rc);
-				}
+					TRACE_ERROR("Failed in exec SQL: %s, -%d", zErrMsg, rc);
 
 				rc = RC_ERR_NO_EXEC_SQL;
 				goto exit_func;
@@ -609,17 +546,12 @@ int db_sqLite_select_prepare(SQLITE_STMT *pstmt, const char *databank, const cha
     int     length;
     sqlite3 *db = NULL;
 
+	TRACE_DEBUG("SQL SELECT PREPARE FUNCTION");
+    
     //	SANITY CHECK
 
-    if (databank == NULL ||
-    	pstmt    == NULL ||
-    	table    == NULL ||
-    	fields   == NULL)
-    {
-    	if (DEV == 1)
-    	{
-    		printf(">>> ERRO parametros invalidos em db_sqLite_select_prepare <<<");
-    	}
+    if (databank == NULL || pstmt    == NULL || table    == NULL || fields   == NULL){
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_sqLite_select_prepare <<<");
         return RC_ERR_PARAMETER_INVALID;
     }
 
@@ -629,10 +561,7 @@ int db_sqLite_select_prepare(SQLITE_STMT *pstmt, const char *databank, const cha
 
 				if(rc != SQLITE_OK)
 				{
-					if (DEV == 1)
-					{
-						printf(">>> ERRO ao abrir o banco de dados %s <<<", databank);
-					}
+					TRACE_ERROR(">>> ERRO ao abrir o banco de dados %s <<<", databank);
 					rc = RC_ERR_NO_OPEN_DATA_BASE;
 					goto exit_func;
 				}
@@ -662,10 +591,7 @@ int db_sqLite_select_prepare(SQLITE_STMT *pstmt, const char *databank, const cha
     	}
     }
 
-    if(DEV == 1)
-    {
-    	printf("[%s]", sql);
-    }
+    TRACE_DEBUG("[%s]", sql);
 
     //	EXECUTA SELECT
 
@@ -673,11 +599,8 @@ int db_sqLite_select_prepare(SQLITE_STMT *pstmt, const char *databank, const cha
 
 			if(rc != SQLITE_OK)
 			{
-				if (DEV == 1)
-				{
-					printf(">>> ERRO ao tentar executar um SELECT na tabela %s <<<", table);
-					printf(">>> ERRO = %d", rc);
-				}
+				TRACE_ERROR(">>> ERRO ao tentar executar um SELECT na tabela %s <<<", table);
+				TRACE_ERROR(">>> ERRO = %d", rc);
 				rc = RC_ERR_NO_EXEC_SELECT;
 				goto exit_func;
 			}
@@ -690,10 +613,7 @@ int db_sqLite_select_prepare(SQLITE_STMT *pstmt, const char *databank, const cha
 
 				if(*cols < 0)
 				{
-					if (DEV == 1)
-					{
-						printf(">>> ERRO ao tentar contar o numero de colunas da tabela  %s <<<", table);
-					}
+					TRACE_ERROR(">>> ERRO ao tentar contar o numero de colunas da tabela  %s <<<", table);
 					goto exit_func;
 				}
     }
@@ -713,12 +633,11 @@ int db_sqLite_select_step(SQLITE_STMT stmt)
 {
     int rc = RC_OK;
 
+	TRACE_DEBUG("SQL SELECT STEP FUNCTION");
+
     if (stmt == NULL)
     {
-    	if (DEV == 1)
-    	{
-    		printf(">>> ERRO parametros invalidos em db_sqLite_select_step <<<");
-    	}
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_sqLite_select_step <<<");
         return RC_ERR_PARAMETER_INVALID;
     }
 
@@ -738,11 +657,8 @@ int db_sqLite_select_step(SQLITE_STMT stmt)
 				goto exit_func;
 			}
 
-	if(DEV == 1)
-	{
-		printf(">>> ERRO ao tentar saltar para o proximo registro <<<");
-		printf(">>> ERRO = %d", rc);
-	}
+	TRACE_ERROR(">>> ERRO ao tentar saltar para o proximo registro <<<");
+	TRACE_ERROR(">>> ERRO = %d", rc);
 
 	rc = RC_ERR_NO_SKIP;
 
@@ -760,26 +676,18 @@ int db_sqLite_select_column(SQLITE_STMT stmt, int inputIndex, char *outputName, 
     char *name;
     char *value;
 
+	TRACE_DEBUG("SQL SELECT COLUMN FUNCTION");
+
     // SANITY CHECK
 
-    if (stmt        == NULL ||
-    	outputValue == NULL	)
+    if (stmt == NULL || outputValue == NULL)
     {
-    	if(DEV == 1)
-    	{
-    		printf(">>> ERRO parametros invalidos em db_sqLite_select_column <<<");
-    	}
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_sqLite_select_column <<<");
         return RC_ERR_PARAMETER_INVALID;
     }
 
-    if (outputValueSize <= 0    ||
-       (outputName      != NULL &&
-    	outputNameSize  <= 0))
-    {
-    	if(DEV == 1)
-    	{
-    		printf(">>> ERRO parametros invalidos em db_sqLite_select_column <<<");
-    	}
+    if (outputValueSize <= 0 || (outputName != NULL && outputNameSize  <= 0)){
+    	TRACE_ERROR(">>> ERRO parametros invalidos em db_sqLite_select_column <<<");
         return RC_ERR_PARAMETER_INVALID;
     }
 
@@ -789,10 +697,7 @@ int db_sqLite_select_column(SQLITE_STMT stmt, int inputIndex, char *outputName, 
 
 			if(cols < 0)
 			{
-				if(DEV == 1)
-				{
-					printf(">>> ERRO nenhuma coluna encontada <<<");
-				}
+				TRACE_ERROR(">>> ERRO nenhuma coluna encontada <<<");
 				rc = RC_ERR_NO_COLUNS;
 				goto exit_func;
 			}
@@ -802,10 +707,7 @@ int db_sqLite_select_column(SQLITE_STMT stmt, int inputIndex, char *outputName, 
     if (inputIndex < 0 ||
     	inputIndex >= cols)
     {
-    	if(DEV == 1)
-    	{
-    		printf(">>> ERRO coluna selecionada invalida ou superior ao numero de colunas <<<");
-    	}
+    	TRACE_ERROR(">>> ERRO coluna selecionada invalida ou superior ao numero de colunas <<<");
         rc = RC_ERR_NO_COLUNS;
         goto exit_func;
     }
@@ -879,9 +781,12 @@ int db_sqLite_select(const char *databank, const char *table, const char *fields
     char sql[4096];
     const char *data = "Callback function called";
 
+	TRACE_DEBUG("SQL SELECT FUNCTION");
+
     //	SANITY CHECK
     if (databank == NULL || table == NULL || fields == NULL || final == NULL) {
-        return printf("Null parameter received\n");
+        TRACE_ERROR("Null parameter received");
+        return 0;
     }
     
     //	ABRE O DATABASE E RESETA QUALQUER STATEMENT (PARA CORRIGIR DB_CLOSE() VOLTANDO BUSY)
@@ -890,7 +795,7 @@ int db_sqLite_select(const char *databank, const char *table, const char *fields
 
 			if(rc != SQLITE_OK)
 			{
-				rc = printf("Failed in open database: %s - %d\n", sqlite3_errmsg (db), rc);
+				TRACE_ERROR("Failed in open database: %s - %d", sqlite3_errmsg (db), rc);
 				goto exit_func;
 			}
 
@@ -907,10 +812,10 @@ int db_sqLite_select(const char *databank, const char *table, const char *fields
 
     //	EXECUTE STATEMENT
 
-    printf("╔═╗╔═╗ ╦  \n");
-    printf("╚═╗║═╬╗║  \n");
-    printf("╚═╝╚═╝╚╩═╝\n");
-    printf("[%s]\n", sql);
+    TRACE_DEBUG("╔═╗╔═╗ ╦  ");
+    TRACE_DEBUG("╚═╗║═╬╗║  ");
+    TRACE_DEBUG("╚═╝╚═╝╚╩═╝");
+    TRACE_DEBUG("[%s]", sql);
 
     select_count = 0;
     select_final = final;
@@ -920,7 +825,7 @@ int db_sqLite_select(const char *databank, const char *table, const char *fields
 
 			if(rc != SQLITE_OK)
 			{
-				printf("Failed in exec SQL: %s - %d\n", zErrMsg, rc);
+				TRACE_ERROR("Failed in exec SQL: %s - %d", zErrMsg, rc);
 				sqlite3_free(zErrMsg);
 				goto exit_func;
 			}
@@ -928,7 +833,7 @@ int db_sqLite_select(const char *databank, const char *table, const char *fields
 			if(select_count == 0)
 			{
 				rc =	RC_ERR_NO_SELECT;
-						printf("RC_ERR_NO_SELECT\n");
+						TRACE_ERROR("RC_ERR_NO_SELECT");
 			}
 			else
 			{
@@ -959,6 +864,8 @@ int utl_SQL_select_original_Transaction(const char *pszDE90, char *psTransaction
 	// 0222105151 datetime
 	// 162300105742 nsu_acquirer
     //Opcionais: RespCode SerialNumber, EC, Amount, ProcessCode
+
+	TRACE_DEBUG("SQL SELECT TRANSACTION FUNCTION");
 
     strncpy(szMti        , pszDE90 + 0 , 4);
     strncpy(szNsuTerminal, pszDE90 + 4 , 6);
@@ -992,13 +899,14 @@ int utl_SQL_GetLinesFromTable(char *inputDatabase, char *inputTable, char *input
     char	      zRes     [512] = {0x00};
     char          sqlQuery[4096] = {0x00};
 
+	TRACE_DEBUG("SQL GET LINES FUNCTION");
 
     //	SANITY CHECK
 
     if (inputDatabase  == NULL || strlen(inputDatabase) <= 0 ||
     	inputTable     == NULL || strlen(inputTable)    <= 0)
     {
-    	/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - PARAMETRO INVALIDO");
+    	TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - PARAMETRO INVALIDO");
         return(RC_ERR_PARAMETER_INVALID);
     }
 
@@ -1008,7 +916,7 @@ int utl_SQL_GetLinesFromTable(char *inputDatabase, char *inputTable, char *input
 
 			if(rc != SQLITE_OK)
 			{
-				/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - ABERTURA BANCO DE DADOS [%s]", inputDatabase);
+				TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - ABERTURA BANCO DE DADOS [%s]", inputDatabase);
 
 				rc =	RC_ERR_NO_OPEN_DATA_BASE;
 						sqlite3_finalize(stmt);
@@ -1023,7 +931,7 @@ int utl_SQL_GetLinesFromTable(char *inputDatabase, char *inputTable, char *input
 	else
 		snprintf(sqlQuery, sizeof(sqlQuery) - 1, "SELECT count(%s) FROM %s", inputColum, inputTable);
 
-    // /*DEBUG*/printf("QUERY: [%s]\n", sqlQuery);
+    TRACE_DEBUG("QUERY: [%s]", sqlQuery);
 
     //	EXECUTA STATEMENT
 
@@ -1031,7 +939,7 @@ int utl_SQL_GetLinesFromTable(char *inputDatabase, char *inputTable, char *input
 
 			if(rc != SQLITE_OK)
 			{
-				/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - SELECAO DE REGISTRO NA TABELA [%s]", inputTable);
+				TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - SELECAO DE REGISTRO NA TABELA [%s]", inputTable);
 
 				rc =	RC_ERR_NO_SELECT;
 						sqlite3_finalize(stmt);
@@ -1045,7 +953,7 @@ int utl_SQL_GetLinesFromTable(char *inputDatabase, char *inputTable, char *input
 
 			if(nCol <= 0)
 			{
-				/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - NENHUMA COLUNA ENCONTRADA NA TABELA [%s]", inputTable);
+				TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - NENHUMA COLUNA ENCONTRADA NA TABELA [%s]", inputTable);
 
 				rc =	RC_ERR_NO_COLUNS;
 						sqlite3_finalize(stmt);
@@ -1063,7 +971,7 @@ int utl_SQL_GetLinesFromTable(char *inputDatabase, char *inputTable, char *input
 
 	if(count <= 0)
 	{
-		/*DEBUG*/printf("*** [SQL ERR] (db_sqLite_get_txt) - NENHUM REGISTRO ENCONTRADO");
+		TRACE_ERROR("*** [SQL ERR] (db_sqLite_get_txt) - NENHUM REGISTRO ENCONTRADO");
 
 		rc =	RC_ERR_NO_REG;
 				sqlite3_finalize(stmt);
@@ -1073,15 +981,15 @@ int utl_SQL_GetLinesFromTable(char *inputDatabase, char *inputTable, char *input
 
 		//strncpy(output, zRes, output_size);
 
-		/*DEBUG*/
+		
 		if(strlen(zRes) > 0)
 		{
-			// /*DEBUG*/printf("RESP : |%s|\n", zRes);
+			TRACE_DEBUG("RESP : |%s|", zRes);
 			rc = atoi(zRes);
 		}
 		else
 		{
-			// /*DEBUG*/printf("RESP : |**NENHUM DADO NA RESPOSTA**|\n");
+			TRACE_DEBUG("RESP : |**NENHUM DADO NA RESPOSTA**|");
 			rc = 0;
 		}
 

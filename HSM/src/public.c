@@ -1,3 +1,66 @@
+char buffer[MAX_MSG];
+int gPortaServidor;
+
+int util_log_Append(char *data)
+{
+    FILE *fd;
+    char zName[64] = {0x00};
+    int  i;
+
+    sprintf(zName, "%s", LOG_PATH);
+    fd = fopen(zName, "a+");
+
+    if(!fd){
+        printf("ERRO CRIACAO DO ARQUIVO [%s]\n", zName);
+        return(-1);
+    }
+
+    for(i = 0; data[i]; i++)
+        fputc(data[i], fd);
+
+    fclose(fd);
+
+    return(0);
+}
+
+void util_logger(int level, char * file, int line, const char *fmt, ...)
+{
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    char sLevel[16] = {0x00};
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, ap);
+    va_end(ap);
+
+    switch(level){
+        case LOG_DEBUG: strcpy(sLevel, "DEBUG");  break;
+        case LOG_INFO:  strcpy(sLevel, "INFO ");  break;
+        case LOG_WARN:  strcpy(sLevel, "WARN ");  break;
+        case LOG_ERROR: strcpy(sLevel, "ERROR");  break;
+        default:
+        case LOG_FATAL: strcpy(sLevel, "FATAL");  break;
+            break;
+    }
+
+#if LOG_FILE
+    //!TODO: Logica para apagar o log após x dias
+    char output[MAX_MSG] = {0x00};
+    sprintf(output, "[%04d-%02d-%02d %02d:%02d:%02d] [%s] %s:%d - %s\n", 
+            tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            sLevel, &file[6], line, buffer);
+    util_log_Append(output);
+#else
+    printf("[%04d-%02d-%02d %02d:%02d:%02d] [%s] %s:%d - %s\n", 
+            tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            sLevel, &file[6], line, buffer);
+#endif
+
+}
+
 
 char* doDukptDecryptData(const char * psBDK, const char * psKSN, const char * psData, int iSize) 
 {

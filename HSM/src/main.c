@@ -10,42 +10,42 @@
 // int main(int argc, char const *argv[])
 // {
 	// char *pinblock_dec = doDukptDecryptPinBlock(PIN_BLK, PAN_DATA, strlen(PAN_DATA));
-	// printf("doDukptDecryptPinBlock: pinblock_dec \t= [%s]\n", pinblock_dec);
+	// printf("doDukptDecryptPinBlock: pinblock_dec = [%s]\n", pinblock_dec);
 	// assert(memcmp(pinblock_dec, PIN_DEC, strlen(PIN_DEC)) == 0);
 
 	// char *pinblock_enc = doDukptEncryptPinBlock(PIN_DEC, strlen(PIN_DEC), PAN_DATA, strlen(PAN_DATA));
-	// printf("doDukptEncryptPinBlock: pinblock_enc \t= [%s]\n", pinblock_enc);
+	// printf("doDukptEncryptPinBlock: pinblock_enc = [%s]\n", pinblock_enc);
 	// assert(memcmp(pinblock_enc, PIN_BLK, strlen(PIN_BLK)) == 0);
 	
 	// char *pin_dec_res = doDukptDecryptPIN(BDK_PIN, KSN_PIN, PIN_ENC, strlen(PIN_ENC));
-	// printf("doDukptDecryptPIN: \tpin_dec_res \t= [%s]\n", pin_dec_res);
+	// printf("doDukptDecryptPIN: pin_dec_res = [%s]\n", pin_dec_res);
 	// assert(memcmp(pin_dec_res, PIN_BLK, strlen(PIN_BLK)) == 0);
 
 	// char *pin_enc_res = doDukptEncryptPIN(BDK_PIN, KSN_PIN, PIN_BLK, strlen(PIN_BLK));
-	// printf("doDukptEncryptPIN: \tpin_enc_res \t= [%s]\n", pin_enc_res);
+	// printf("doDukptEncryptPIN: pin_enc_res = [%s]\n", pin_enc_res);
 	// assert(memcmp(pin_enc_res, PIN_ENC, strlen(PIN_ENC)) == 0);
 
-	// printf("doDukptDecryptData: \tDATA_DEC \t= [%s]\n", DATA_DEC);
+	// printf("doDukptDecryptData: DATA_DEC = [%s]\n", DATA_DEC);
 	// u8   aAux [248] = {0x00};
 	// u32  zAux       = Str2Hex(strlen(DATA_DEC), DATA_DEC, aAux);
-	// printf("doDukptDecryptData: \tDATA_DEC \t= [%s]\n", aAux);
+	// printf("doDukptDecryptData: DATA_DEC = [%s]\n", aAux);
 
 	// char *enc_res = doDukptEncryptData(BDK_DATA, KSN_DATA, DATA_DEC, strlen(DATA_DEC));
-	// printf("doDukptEncryptData: \tenc_res \t= [%s]\n", enc_res);
+	// printf("doDukptEncryptData: enc_res = [%s]\n", enc_res);
 	// assert(memcmp(enc_res, DATA_ENC, strlen(DATA_ENC)) == 0);
 
 	// char *dec_res = doDukptDecryptData(BDK_DATA, KSN_DATA, enc_res, strlen(enc_res));
-	// printf("doDukptDecryptData: \tdec_res \t= [%s]\n", dec_res);
+	// printf("doDukptDecryptData: dec_res = [%s]\n", dec_res);
 	// u8   bAux [248] = {0x00};
 	// u32  iAux       = Str2Hex(strlen(enc_res), dec_res, bAux);
-	// printf("doDukptDecryptData: \tdec_res \t= [%s]\n", bAux);
+	// printf("doDukptDecryptData: dec_res = [%s]\n", bAux);
 	// assert(memcmp(dec_res, DATA_DEC, strlen(DATA_DEC)) == 0);
 
 	// char *dec_res = doMkWkDecryptData(MK_DATA, WK_DATA, DATA_ENC_3DES, strlen(DATA_ENC_3DES));
-	// printf("doMkWkDecryptData: \tdec_res \t= [%s]\n", dec_res);
+	// printf("doMkWkDecryptData: dec_res = [%s]\n", dec_res);
 	// u8   bAux [248] = {0x00};
 	// u32  iAux       = Str2Hex(strlen(DATA_ENC_3DES), dec_res, bAux);
-	// printf("doMkWkDecryptData: \tdec_res \t= [%s]\n", bAux);
+	// printf("doMkWkDecryptData: dec_res = [%s]\n", bAux);
 	// assert(memcmp(dec_res, DATA_DEC_3DES, strlen(DATA_DEC_3DES)) == 0);
 
 // 	return 0;
@@ -74,11 +74,12 @@ int main(void) {
 
     st_CryptoData t_cryptoData;
 
-    do{
+    do
+    {
         //Criando um socket
         socket_desc = socket(AF_INET, SOCK_STREAM, 0);
         if (socket_desc == -1) {
-            printf("Nao foi possivel criar o socket, aguarde alguns instantes\n");
+            TRACE_FATAL("Nao foi possivel criar o socket, aguarde alguns instantes");
             return -1;
         }
 
@@ -89,60 +90,60 @@ int main(void) {
 
         //Associando o socket a porta e endereco
         if (bind(socket_desc, (struct sockaddr *) &servidor, sizeof (servidor)) < 0) {
-            puts("Porta ocupada, aguarde alguns instantes\n");
+            TRACE_FATAL("Porta ocupada, aguarde alguns instantes");
             return -1;
         }
-        puts("Bind efetuado com sucesso\n");
+        TRACE_INFO("Bind efetuado com sucesso");
 
         // Ouvindo por conexoes
         listen(socket_desc, 3);
         /*********************************************************/
         //Aceitando e tratando conexoes
 
-        puts("Aguardando por conexoes...");
+        TRACE_INFO("Aguardando por conexoes...");
         c = sizeof (struct sockaddr_in);
 
-        while ((conexao = accept(socket_desc, (struct sockaddr *) &cliente, (socklen_t*) & c))) {
+        while ((conexao = accept(socket_desc, (struct sockaddr *) &cliente, (socklen_t*) & c))) 
+        {
             if (conexao < 0) {
-                perror("Erro ao receber conexao\n");
+                TRACE_ERROR("Erro ao receber conexao");
                 continue;
             }
-        // pegando IP e porta do cliente
-        cliente_ip = inet_ntoa(cliente.sin_addr);
-        cliente_port = ntohs(cliente.sin_port);
-        printf("cliente conectou: %s : [ %d ]\n", cliente_ip, cliente_port);
-        memset(&t_cryptoData, 0x00, sizeof(t_cryptoData));
 
-        // lendo dados enviados pelo cliente
-        //mensagem 1 recebido nome do arquivo   
-        memset(tempMessage, 0x00, sizeof(tempMessage));
-        if ((sizeRecv = read(conexao, tempMessage, MAX_MSG)) < 0) {
-            perror("Erro ao receber dados do cliente: ");
-            continue;
-        }
+	        // pegando IP e porta do cliente
+	        cliente_ip = inet_ntoa(cliente.sin_addr);
+	        cliente_port = ntohs(cliente.sin_port);
+	        TRACE_INFO("cliente conectou: %s : [ %d ]", cliente_ip, cliente_port);
+	        memset(&t_cryptoData, 0x00, sizeof(t_cryptoData));
 
-        if (tempMessage == NULL){
-            perror("Erro ao receber dados do cliente");
-            continue;   
-        }
+	        // lendo dados enviados pelo cliente
+	        //mensagem 1 recebido nome do arquivo   
+	        memset(tempMessage, 0x00, sizeof(tempMessage));
+	        if ((sizeRecv = read(conexao, tempMessage, MAX_MSG)) < 0) {
+	            TRACE_ERROR("Erro ao receber dados do cliente: ");
+	            continue;
+	        }
 
-        strcpy(recvMessage, tempMessage);
-		printf("Parse HSM Message: recvMessage \t= [%s]\n", recvMessage);
+	        if (tempMessage == NULL){
+	            TRACE_ERROR("Erro ao receber dados do cliente");
+	            continue;   
+	        }
 
-        do{
+	        strcpy(recvMessage, tempMessage);
+			TRACE_INFO("Parse Message: recvMessage    = [%s]", recvMessage);
         	strncpy(t_cryptoData.sKSN     , &recvMessage[0] , 20);
         	strncpy(t_cryptoData.sPINBlock, &recvMessage[20], 16);
         	strcpy (t_cryptoData.sDataEnc , &recvMessage[36]);
-        	// printf("Parse HSM Message: \tsKSN \t= [%s]\n", t_cryptoData.sKSN);
-        	// printf("Parse HSM Message: \tsPINBlock \t= [%s]\n", t_cryptoData.sPINBlock);
-        	// printf("Parse HSM Message: \tsDataEnc \t= [%s]\n", t_cryptoData.sDataEnc);
+        	TRACE_DEBUG("Parse HSM Message: sKSN       = [%s]", t_cryptoData.sKSN);
+        	TRACE_DEBUG("Parse HSM Message: sPINBlock  = [%s]", t_cryptoData.sPINBlock);
+        	TRACE_DEBUG("Parse HSM Message: sDataEnc   = [%s]", t_cryptoData.sDataEnc);
         	
         	//Descriptografa dados do DE125
         	char *dec_res = doMkWkDecryptData(MK_DATA, WK_DATA, t_cryptoData.sDataEnc, strlen(t_cryptoData.sDataEnc));
 			Str2Hex(strlen(t_cryptoData.sDataEnc), dec_res, bAux);
 			free(dec_res);
 			strcpy(t_cryptoData.sDataDec, bAux);
-			// printf("doMkWkDecryptData: \tsDataDec \t= [%s]\n", t_cryptoData.sDataDec);
+			TRACE_DEBUG("doMkWkDecryptData: sDataDec   = [%s]", t_cryptoData.sDataDec);
 
 			//Parseia informações do bit
 			count = 3;  		// Pula "PAN"
@@ -185,17 +186,17 @@ int main(void) {
 			tamanho = atoi(tempMessage);
 			strncpy(t_cryptoData.sCVV, &t_cryptoData.sDataDec[count], tamanho);
 
-			// printf("Parse HSM Message: \tsPAN \t= [%s]\n", t_cryptoData.sPAN);
-			// printf("Parse HSM Message: \tsTrack1 \t= [%s]\n", t_cryptoData.sTrack1);
-			// printf("Parse HSM Message: \tsTrack2 \t= [%s]\n", t_cryptoData.sTrack2);
-			// printf("Parse HSM Message: \tsDTV \t= [%s]\n", t_cryptoData.sDTV);
-			// printf("Parse HSM Message: \tsCVV \t= [%s]\n", t_cryptoData.sCVV);
+			TRACE_DEBUG("Parse HSM Message: sPAN       = [%s]", t_cryptoData.sPAN);
+			TRACE_DEBUG("Parse HSM Message: sTrack1    = [%s]", t_cryptoData.sTrack1);
+			TRACE_DEBUG("Parse HSM Message: sTrack2    = [%s]", t_cryptoData.sTrack2);
+			TRACE_DEBUG("Parse HSM Message: sDTV       = [%s]", t_cryptoData.sDTV);
+			TRACE_DEBUG("Parse HSM Message: sCVV       = [%s]", t_cryptoData.sCVV);
 
 			char *pin_dec_res = doDukptDecryptPIN(BDK_DATA, t_cryptoData.sKSN, t_cryptoData.sPINBlock, strlen(t_cryptoData.sPINBlock));
-			// printf("doDukptDecryptPIN: \tpin_dec_res \t= [%s]\n", pin_dec_res);
+			TRACE_DEBUG("DukptDecryptPIN: pin_dec_res  = [%s]", pin_dec_res);
 
 			char *pinblock_dec = doDukptDecryptPinBlock(pin_dec_res, t_cryptoData.sPAN, strlen(t_cryptoData.sPAN));
-			// printf("doDukptDecryptPinBlock: pinblock_dec \t= [%s]\n", pinblock_dec);
+			TRACE_DEBUG("DukptDecryptPinBlock: pin_dec = [%s]", pinblock_dec);
 			strcpy(t_cryptoData.sPINDec, pinblock_dec);
 			free(pin_dec_res);
 			free(pinblock_dec);
@@ -207,22 +208,21 @@ int main(void) {
 									t_cryptoData.sDTV,
 									t_cryptoData.sCVV,
 									t_cryptoData.sPINDec);
-			printf("Maker HSM Message: sendMessage \t= [%s]\n", sendMessage);
+			TRACE_INFO("Maker Message: sendMessage    = [%s]", sendMessage);
 
             write(conexao, sendMessage, strlen(sendMessage));
 
-        }while(FALSE);
-        
-        close(conexao);
-        printf("Servidor finalizado...\n");
-        continue;
-            puts("Handler assigned");
+	        close(conexao);
+	        TRACE_INFO("Servidor finalizado...");
+	        continue;
         }
+
         if (nova_conex < 0) {
-            perror("accept failed");
+            TRACE_ERROR("Falha no recebimento");
             continue;
         }
     }while(1);
     
+    TRACE_FATAL("Aplicacao abortada...");
     return 0;
 }

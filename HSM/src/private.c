@@ -69,7 +69,10 @@ static int Str2Hex(int str_length, const char *hex_str, unsigned char *byte_arra
 static u8* HexDuplicate(const uint8_t* pbHexIn, int iLen) 
 {
     uint8_t* pbHexOut = malloc(iLen + 1);
-    if (pbHexOut) memcpy(pbHexOut, pbHexIn, iLen);
+    if (pbHexOut){
+    	memset(pbHexOut, 0x00, iLen + 1);
+    	memcpy(pbHexOut, pbHexIn, iLen);
+    }
     return pbHexOut;
 }
 

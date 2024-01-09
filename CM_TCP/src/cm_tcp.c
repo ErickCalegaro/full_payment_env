@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <arpa/inet.h>
 #include <pthread.h>
@@ -11,6 +12,119 @@
 
 #define MAX_CLIENTS 100
 #define MAX_MSG     1024*5
+
+#define LOG_NONE    0
+#define LOG_FATAL   1
+#define LOG_ERROR   2    //PROD
+#define LOG_WARN    3    //HOMOLOG
+#define LOG_INFO    4    //DEV
+#define LOG_DEBUG   5    
+#define LOG_PATH    "../PUB/log_cm_tcp_" // + gPortaServidor
+#define LOG_EXT     ".txt"
+
+#define LOG_LEVEL   LOG_INFO
+#define LOG_FILE    1   //LOGA EM ARQUIVO, OU CONSOLE
+
+#if (LOG_LEVEL == LOG_DEBUG)
+#define TRACE_DEBUG(fmt, ...) util_logger(LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_INFO(fmt, ...) util_logger(LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_WARN(fmt, ...) util_logger(LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_INFO)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...) util_logger(LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_WARN(fmt, ...) util_logger(LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_WARN)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...) util_logger(LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_ERROR)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_FATAL)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...)
+#define TRACE_ERROR(fmt, ...)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#else
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...)
+#define TRACE_ERROR(fmt, ...)
+#define TRACE_FATAL(fmt, ...)
+#endif
+
+char buffer[MAX_MSG];
+int gPortaServidor;
+
+int util_log_Append(char *data)
+{
+    FILE *fd;
+    char zName[64] = {0x00};
+    int  i;
+
+    sprintf(zName, "%s%d%s", LOG_PATH, gPortaServidor, LOG_EXT);
+    fd = fopen(zName, "a+");
+
+    if(!fd){
+        printf("ERRO CRIACAO DO ARQUIVO [%s]\n", zName);
+        return(-1);
+    }
+
+    for(i = 0; data[i]; i++)
+        fputc(data[i], fd);
+
+    fclose(fd);
+
+    return(0);
+}
+
+void util_logger(int level, char * file, int line, const char *fmt, ...)
+{
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    char sLevel[16] = {0x00};
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, ap);
+    va_end(ap);
+
+    switch(level){
+        case LOG_DEBUG: strcpy(sLevel, "DEBUG");  break;
+        case LOG_INFO:  strcpy(sLevel, "INFO ");  break;
+        case LOG_WARN:  strcpy(sLevel, "WARN ");  break;
+        case LOG_ERROR: strcpy(sLevel, "ERROR");  break;
+        default:
+        case LOG_FATAL: strcpy(sLevel, "FATAL");  break;
+            break;
+    }
+
+#if LOG_FILE
+    //!TODO: Logica para apagar o log após x dias
+    char output[MAX_MSG] = {0x00};
+    sprintf(output, "[%04d-%02d-%02d %02d:%02d:%02d] [%s] %s:%d - %s\n", 
+            tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            sLevel, &file[6], line, buffer);
+    util_log_Append(output);
+#else
+    printf("[%04d-%02d-%02d %02d:%02d:%02d] [%s] %s:%d - %s\n", 
+            tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+            tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+            sLevel, &file[6], line, buffer);
+#endif
+
+}
 
 // Estrutura para armazenar informações do cliente
 typedef struct {
@@ -27,7 +141,7 @@ void *handleClient(void *arg) {
     int         commSocketISM;
 
     while ((bytesRead = recv(client->socket, buffer, sizeof(buffer), 0)) > 0) {
-        printf("Cliente %d mandou: %s\n", ntohs(client->address.sin_port), buffer);
+        TRACE_DEBUG("Cliente %d mandou: %s", ntohs(client->address.sin_port), buffer);
 
         if (strncmp(buffer, "pingcm", 6) == 0)
         {
@@ -39,7 +153,7 @@ void *handleClient(void *arg) {
         // Criação do socket do ISM
         commSocketISM = socket(AF_INET, SOCK_STREAM, 0);
         if (commSocketISM == -1) {
-            perror("Erro ao criar o socket do cliente");
+            TRACE_FATAL("Erro ao criar o socket do cliente");
             exit(EXIT_FAILURE);
         }
 
@@ -47,14 +161,14 @@ void *handleClient(void *arg) {
         serverAddrISM.sin_family = AF_INET;
         serverAddrISM.sin_port = htons(ISM_PORT);
         if (inet_pton(AF_INET, LOCALHOST, &serverAddrISM.sin_addr) <= 0) {
-            perror("Erro ao configurar o endereço do ISO_MODULE");
+            TRACE_FATAL("Erro ao configurar o endereço do ISO_MODULE");
             close(commSocketISM);
             exit(EXIT_FAILURE);
         }
 
         // Conecta-se ao ISO_MODULE
         if (connect(commSocketISM, (struct sockaddr *)&serverAddrISM, sizeof(serverAddrISM)) == -1) {
-            perror("Erro ao conectar ao ISO_MODULE");
+            TRACE_FATAL("Erro ao conectar ao ISO_MODULE");
             close(commSocketISM);
             exit(EXIT_FAILURE);
         }
@@ -69,13 +183,13 @@ void *handleClient(void *arg) {
         bytesRead = recv(commSocketISM, buffer, sizeof(buffer), 0);
 
         if (bytesRead == -1) {
-            perror("Erro ao receber dados do servidor");
+            TRACE_ERROR("Erro ao receber dados do servidor");
         } else if (bytesRead == 0) {
             // O servidor fechou a conexão
-            printf("O servidor fechou a conexão\n");
+            TRACE_INFO("O servidor fechou a conexão");
         } else {
             // Imprime a resposta recebida
-            printf("Resposta do servidor: %.*s\n", (int)bytesRead, buffer);
+            TRACE_DEBUG("Resposta do servidor: %.*s", (int)bytesRead, buffer);
         }
 
         // Fecha o socket do ISO_MODULE
@@ -91,7 +205,7 @@ void *handleClient(void *arg) {
     }
 
     // Cliente desconectado
-    printf("Cliente desconectado: %s:%d\n", inet_ntoa(client->address.sin_addr), ntohs(client->address.sin_port));
+    TRACE_INFO("Cliente desconectado: %s:%d", inet_ntoa(client->address.sin_addr), ntohs(client->address.sin_port));
 
     free(client);
 
@@ -115,41 +229,41 @@ int main(int argc, char* argv[]) {
     }
 
     char* aux1 = argv[1];
-    int portaServidor = atoi(aux1);
+    gPortaServidor = atoi(aux1);
 
     // Criação do socket do servidor
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
-        perror("Erro ao criar o socket do servidor");
+        TRACE_FATAL("Erro ao criar o socket do servidor");
         exit(EXIT_FAILURE);
     }
 
     // Configuração do endereço do servidor
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(portaServidor);
+    serverAddr.sin_port = htons(gPortaServidor);
 
     // Vincula o socket ao endereço e à porta
     if (bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
-        perror("Erro ao vincular o socket ao endereço e à porta");
+        TRACE_FATAL("Erro ao vincular o socket ao endereço e à porta");
         close(serverSocket);
         exit(EXIT_FAILURE);
     }
 
     // Habilita o servidor para ouvir conexões
     if (listen(serverSocket, MAX_CLIENTS) == -1) {
-        perror("Erro ao configurar o servidor para ouvir conexões");
+        TRACE_FATAL("Erro ao configurar o servidor para ouvir conexões");
         close(serverSocket);
         exit(EXIT_FAILURE);
     }
 
-    printf("Servidor aguardando conexões na porta %d...\n", portaServidor);
+    TRACE_INFO("Servidor aguardando conexões na porta %d...", gPortaServidor);
 
     while (1) {
         // Aceita uma nova conexão
         clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
         if (clientSocket == -1) {
-            perror("Erro ao aceitar a conexão");
+            TRACE_ERROR("Erro ao aceitar a conexão");
             continue;
         }
 
@@ -159,7 +273,7 @@ int main(int argc, char* argv[]) {
         client->address = clientAddr;
         
         // Cliente desconectado
-        printf("Cliente conectado: %s:%d\n", inet_ntoa(client->address.sin_addr), ntohs(client->address.sin_port));
+        TRACE_INFO("Cliente conectado: %s:%d", inet_ntoa(client->address.sin_addr), ntohs(client->address.sin_port));
 
         // Cria uma nova thread para lidar com o cliente
         pthread_create(&clientThreads[MAX_CLIENTS], NULL, handleClient, (void *)client);

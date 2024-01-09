@@ -130,9 +130,12 @@ int iso_FinancialProcess(char * messageRecv, int sizeRecv, char * messageSend, i
 	iso_DumpFinStruct(&structMsgIn);
 	iso_SaveFinStruct(&structMsgIn);
 	if (strlen(structMsgIn.pinBlock)){
-		result = util_sendDataToHSM(structMsgIn.decryptData, structMsgIn.pinBlock, structMsgIn.cryptedData);
-		if (result){
-			strcpy(structMsgOut.responseCode, "55");
+		if (memcmp(structMsgIn.pinBlock, "0000000000000000", 16) != 0)
+		{
+			result = util_sendDataToHSM(structMsgIn.decryptData, structMsgIn.pinBlock, structMsgIn.cryptedData);
+			if (result){
+				strcpy(structMsgOut.responseCode, "55");
+			}
 		}
 	}
 	result = iso_FinancialMockup(&structMsgIn, &structMsgOut);
@@ -754,7 +757,7 @@ int iso_NetworkMaker(char * message, ISO_NET_MODAL_T * structMsg)
 	if (strlen(structMsg->countryCode) > 0){ //bit 19
 		currentByte = 4;
 		structMsg->bitmap[currentByte] = util_AddBitToByte(structMsg->bitmap[currentByte], 0x02);
-		printf("CountryCode [%s]\n", structMsg->countryCode);
+		TRACE_DEBUG("CountryCode [%s]", structMsg->countryCode);
 		strncat(messageAux, structMsg->countryCode, 3);
 	}
 
@@ -998,7 +1001,7 @@ int iso_FinancialMaker(char * message, ISO_FIN_MODAL_T * structMsg)
 		structMsg->bitmap[currentByte] = util_AddBitToByte(structMsg->bitmap[currentByte], 0x04);
 		memset(sizeAux, 0x00, sizeof(sizeAux));
 		sprintf(sizeAux, "%03d", (int)strlen(structMsg->receiptEC));
-		// printf("structMsg->receiptEC(%d) = [%s]\n", (int)strlen(structMsg->receiptEC), structMsg->receiptEC);
+		TRACE_DEBUG("structMsg->receiptEC(%d) = [%s]", (int)strlen(structMsg->receiptEC), structMsg->receiptEC);
 		strncat(messageAux, sizeAux, 3); 
 		strncat(messageAux, structMsg->receiptEC, strlen(structMsg->receiptEC));
 	}
@@ -1337,96 +1340,102 @@ int iso_ReversalMaker(char * message, ISO_REV_MODAL_T * structMsg)
 
 void iso_DumpNetStruct(ISO_NET_MODAL_T * structMsg)
 {
-	printf("########################\n#       ISO DUMP       #\n########################\n");
-	printf("mti            = [%s]\n", structMsg->mti);
-	printf("bitmap         = [%s]\n", structMsg->bitmap);
-	printf("gmtDateTime    = [%s]\n", structMsg->gmtDateTime);
-	printf("localNSU       = [%s]\n", structMsg->localNSU);
-	printf("localTime      = [%s]\n", structMsg->localTime);
-	printf("localDate      = [%s]\n", structMsg->localDate);
-	printf("countryCode    = [%s]\n", structMsg->countryCode);
-	printf("responseCode   = [%s]\n", structMsg->responseCode);
-	printf("serialNumber   = [%s]\n", structMsg->serialNumber);
-	printf("ecDocument     = [%s]\n", structMsg->ecDocument);
-	printf("terminalInfo   = [%s]\n", structMsg->terminalInfo);
-	printf("tableTrade1    = [%s]\n", structMsg->tableTrade1);
-	printf("tableTrade2    = [%s]\n", structMsg->tableTrade2);
-	printf("managementCode = [%s]\n", structMsg->managementCode);
-	printf("versionDetail  = [%s]\n", structMsg->versionDetail);
-	printf("simCardInfo    = [%s]\n", structMsg->simCardInfo);
-	printf("acquirerNSU    = [%s]\n", structMsg->acquirerNSU);
+	TRACE_DEBUG("########################");
+	TRACE_DEBUG("#       ISO DUMP       #");
+	TRACE_DEBUG("########################");
+	TRACE_DEBUG("mti            = [%s]", structMsg->mti);
+	TRACE_DEBUG("bitmap         = [%s]", structMsg->bitmap);
+	TRACE_DEBUG("gmtDateTime    = [%s]", structMsg->gmtDateTime);
+	TRACE_DEBUG("localNSU       = [%s]", structMsg->localNSU);
+	TRACE_DEBUG("localTime      = [%s]", structMsg->localTime);
+	TRACE_DEBUG("localDate      = [%s]", structMsg->localDate);
+	TRACE_DEBUG("countryCode    = [%s]", structMsg->countryCode);
+	TRACE_DEBUG("responseCode   = [%s]", structMsg->responseCode);
+	TRACE_DEBUG("serialNumber   = [%s]", structMsg->serialNumber);
+	TRACE_DEBUG("ecDocument     = [%s]", structMsg->ecDocument);
+	TRACE_DEBUG("terminalInfo   = [%s]", structMsg->terminalInfo);
+	TRACE_DEBUG("tableTrade1    = [%s]", structMsg->tableTrade1);
+	TRACE_DEBUG("tableTrade2    = [%s]", structMsg->tableTrade2);
+	TRACE_DEBUG("managementCode = [%s]", structMsg->managementCode);
+	TRACE_DEBUG("versionDetail  = [%s]", structMsg->versionDetail);
+	TRACE_DEBUG("simCardInfo    = [%s]", structMsg->simCardInfo);
+	TRACE_DEBUG("acquirerNSU    = [%s]", structMsg->acquirerNSU);
 	return;
 }
 
 void iso_DumpFinStruct(ISO_FIN_MODAL_T * structMsg)
 {
-	printf("########################\n#       ISO DUMP       #\n########################\n");
-	printf("mti            = [%s]\n", structMsg->mti);
-	printf("bitmap         = [%s]\n", structMsg->bitmap);
-	printf("processCode    = [%s]\n", structMsg->processCode);
-	printf("amount         = [%s]\n", structMsg->amount);
-	printf("gmtDateTime    = [%s]\n", structMsg->gmtDateTime);
-	printf("localNSU       = [%s]\n", structMsg->localNSU);
-	printf("localTime      = [%s]\n", structMsg->localTime);
-	printf("localDate      = [%s]\n", structMsg->localDate);
-	printf("countryCode    = [%s]\n", structMsg->countryCode);
-	printf("entryMode      = [%s]\n", structMsg->entryMode);
-	printf("PanSeqNumber   = [%s]\n", structMsg->PanSeqNumber);
-	printf("hostNSU        = [%s]\n", structMsg->hostNSU);
-	printf("responseCode   = [%s]\n", structMsg->responseCode);
-	printf("serialNumber   = [%s]\n", structMsg->serialNumber);
-	printf("ecDocument     = [%s]\n", structMsg->ecDocument);
-	printf("currencyCode   = [%s]\n", structMsg->currencyCode);
-	printf("pinBlock       = [%s]\n", structMsg->pinBlock);
-	printf("emvData        = [%s]\n", structMsg->emvData);
-	printf("lastTrsData    = [%s]\n", structMsg->lastTrsData);
-	printf("terminalInfo   = [%s]\n", structMsg->terminalInfo);
-	printf("receiptEC      = [%s]\n", structMsg->receiptEC);
-	printf("adtTrsData     = [%s]\n", structMsg->adtTrsData);
-	printf("installments   = [%s]\n", structMsg->installments);
-	printf("managementCode = [%s]\n", structMsg->managementCode);
-	printf("primalTrsData  = [%s]\n", structMsg->primalTrsData);
-	printf("paymentMethod  = [%s]\n", structMsg->paymentMethod);
-	printf("versionDetail  = [%s]\n", structMsg->versionDetail);
-	printf("decryptData    = [%s]\n", structMsg->decryptData);
-	printf("simCardInfo    = [%s]\n", structMsg->simCardInfo);
-	printf("receiptHolder  = [%s]\n", structMsg->receiptHolder);
-	printf("cryptedData    = [%s]\n", structMsg->cryptedData);
-	printf("acquirerNSU    = [%s]\n", structMsg->acquirerNSU);
+	TRACE_DEBUG("########################");
+	TRACE_DEBUG("#       ISO DUMP       #");
+	TRACE_DEBUG("########################");
+	TRACE_DEBUG("mti            = [%s]", structMsg->mti);
+	TRACE_DEBUG("bitmap         = [%s]", structMsg->bitmap);
+	TRACE_DEBUG("processCode    = [%s]", structMsg->processCode);
+	TRACE_DEBUG("amount         = [%s]", structMsg->amount);
+	TRACE_DEBUG("gmtDateTime    = [%s]", structMsg->gmtDateTime);
+	TRACE_DEBUG("localNSU       = [%s]", structMsg->localNSU);
+	TRACE_DEBUG("localTime      = [%s]", structMsg->localTime);
+	TRACE_DEBUG("localDate      = [%s]", structMsg->localDate);
+	TRACE_DEBUG("countryCode    = [%s]", structMsg->countryCode);
+	TRACE_DEBUG("entryMode      = [%s]", structMsg->entryMode);
+	TRACE_DEBUG("PanSeqNumber   = [%s]", structMsg->PanSeqNumber);
+	TRACE_DEBUG("hostNSU        = [%s]", structMsg->hostNSU);
+	TRACE_DEBUG("responseCode   = [%s]", structMsg->responseCode);
+	TRACE_DEBUG("serialNumber   = [%s]", structMsg->serialNumber);
+	TRACE_DEBUG("ecDocument     = [%s]", structMsg->ecDocument);
+	TRACE_DEBUG("currencyCode   = [%s]", structMsg->currencyCode);
+	TRACE_DEBUG("pinBlock       = [%s]", structMsg->pinBlock);
+	TRACE_DEBUG("emvData        = [%s]", structMsg->emvData);
+	TRACE_DEBUG("lastTrsData    = [%s]", structMsg->lastTrsData);
+	TRACE_DEBUG("terminalInfo   = [%s]", structMsg->terminalInfo);
+	TRACE_DEBUG("receiptEC      = [%s]", structMsg->receiptEC);
+	TRACE_DEBUG("adtTrsData     = [%s]", structMsg->adtTrsData);
+	TRACE_DEBUG("installments   = [%s]", structMsg->installments);
+	TRACE_DEBUG("managementCode = [%s]", structMsg->managementCode);
+	TRACE_DEBUG("primalTrsData  = [%s]", structMsg->primalTrsData);
+	TRACE_DEBUG("paymentMethod  = [%s]", structMsg->paymentMethod);
+	TRACE_DEBUG("versionDetail  = [%s]", structMsg->versionDetail);
+	TRACE_DEBUG("decryptData    = [%s]", structMsg->decryptData);
+	TRACE_DEBUG("simCardInfo    = [%s]", structMsg->simCardInfo);
+	TRACE_DEBUG("receiptHolder  = [%s]", structMsg->receiptHolder);
+	TRACE_DEBUG("cryptedData    = [%s]", structMsg->cryptedData);
+	TRACE_DEBUG("acquirerNSU    = [%s]", structMsg->acquirerNSU);
 	return;
 }
 
 void iso_DumpRevStruct(ISO_REV_MODAL_T * structMsg)
 {
-	printf("########################\n#       ISO DUMP       #\n########################\n");
-	printf("mti            = [%s]\n", structMsg->mti);
-	printf("bitmap         = [%s]\n", structMsg->bitmap);
-	printf("processCode    = [%s]\n", structMsg->processCode);
-	printf("amount         = [%s]\n", structMsg->amount);
-	printf("gmtDateTime    = [%s]\n", structMsg->gmtDateTime);
-	printf("localNSU       = [%s]\n", structMsg->localNSU);
-	printf("localTime      = [%s]\n", structMsg->localTime);
-	printf("localDate      = [%s]\n", structMsg->localDate);
-	printf("entryMode      = [%s]\n", structMsg->entryMode);
-	printf("PanSeqNumber   = [%s]\n", structMsg->PanSeqNumber);
-	printf("hostNSU        = [%s]\n", structMsg->hostNSU);
-	printf("responseCode   = [%s]\n", structMsg->responseCode);
-	printf("serialNumber   = [%s]\n", structMsg->serialNumber);
-	printf("ecDocument     = [%s]\n", structMsg->ecDocument);
-	printf("currencyCode   = [%s]\n", structMsg->currencyCode);
-	printf("emvData        = [%s]\n", structMsg->emvData);
-	printf("lastTrsData    = [%s]\n", structMsg->lastTrsData);
-	printf("terminalInfo   = [%s]\n", structMsg->terminalInfo);
-	printf("receiptEC      = [%s]\n", structMsg->receiptEC);
-	printf("adtTrsData     = [%s]\n", structMsg->adtTrsData);
-	printf("managementCode = [%s]\n", structMsg->managementCode);
-	printf("primalTrsData  = [%s]\n", structMsg->primalTrsData);
-	printf("versionDetail  = [%s]\n", structMsg->versionDetail);
-	printf("decryptData    = [%s]\n", structMsg->decryptData);
-	printf("simCardInfo    = [%s]\n", structMsg->simCardInfo);
-	printf("receiptHolder  = [%s]\n", structMsg->receiptHolder);
-	printf("cryptedData    = [%s]\n", structMsg->cryptedData);
-	printf("acquirerNSU    = [%s]\n", structMsg->acquirerNSU);
+	TRACE_DEBUG("########################");
+	TRACE_DEBUG("#       ISO DUMP       #");
+	TRACE_DEBUG("########################");
+	TRACE_DEBUG("mti            = [%s]", structMsg->mti);
+	TRACE_DEBUG("bitmap         = [%s]", structMsg->bitmap);
+	TRACE_DEBUG("processCode    = [%s]", structMsg->processCode);
+	TRACE_DEBUG("amount         = [%s]", structMsg->amount);
+	TRACE_DEBUG("gmtDateTime    = [%s]", structMsg->gmtDateTime);
+	TRACE_DEBUG("localNSU       = [%s]", structMsg->localNSU);
+	TRACE_DEBUG("localTime      = [%s]", structMsg->localTime);
+	TRACE_DEBUG("localDate      = [%s]", structMsg->localDate);
+	TRACE_DEBUG("entryMode      = [%s]", structMsg->entryMode);
+	TRACE_DEBUG("PanSeqNumber   = [%s]", structMsg->PanSeqNumber);
+	TRACE_DEBUG("hostNSU        = [%s]", structMsg->hostNSU);
+	TRACE_DEBUG("responseCode   = [%s]", structMsg->responseCode);
+	TRACE_DEBUG("serialNumber   = [%s]", structMsg->serialNumber);
+	TRACE_DEBUG("ecDocument     = [%s]", structMsg->ecDocument);
+	TRACE_DEBUG("currencyCode   = [%s]", structMsg->currencyCode);
+	TRACE_DEBUG("emvData        = [%s]", structMsg->emvData);
+	TRACE_DEBUG("lastTrsData    = [%s]", structMsg->lastTrsData);
+	TRACE_DEBUG("terminalInfo   = [%s]", structMsg->terminalInfo);
+	TRACE_DEBUG("receiptEC      = [%s]", structMsg->receiptEC);
+	TRACE_DEBUG("adtTrsData     = [%s]", structMsg->adtTrsData);
+	TRACE_DEBUG("managementCode = [%s]", structMsg->managementCode);
+	TRACE_DEBUG("primalTrsData  = [%s]", structMsg->primalTrsData);
+	TRACE_DEBUG("versionDetail  = [%s]", structMsg->versionDetail);
+	TRACE_DEBUG("decryptData    = [%s]", structMsg->decryptData);
+	TRACE_DEBUG("simCardInfo    = [%s]", structMsg->simCardInfo);
+	TRACE_DEBUG("receiptHolder  = [%s]", structMsg->receiptHolder);
+	TRACE_DEBUG("cryptedData    = [%s]", structMsg->cryptedData);
+	TRACE_DEBUG("acquirerNSU    = [%s]", structMsg->acquirerNSU);
 	return;
 }
 
@@ -1524,7 +1533,7 @@ int iso_UpdateFinStruct(ISO_FIN_MODAL_T * structMsg)
 		SQLITE_FIELD_OPERATOR_NAME, operator_name, SQLITE_FIELD_RESPONSE_CODE , structMsg->responseCode, SQLITE_FIELD_NSU_ACQUIRER   , structMsg->acquirerNSU);
 	sprintf (condition, "%s == '%s'", SQLITE_FIELD_NSU_HOST, structMsg->hostNSU);
 	rc = db_sqLite_update (SQLITE_DB_DATABASE, SQLITE_TABLE_TRANSACTIONS, fields, condition);
-	printf("db_sqLite_update res = [%d]\n", rc);
+	TRACE_DEBUG("db_sqLite_update res = [%d]", rc);
 
 	//Comprovante
 	// @=MASTERCARD@=CREDITO A VISTA@=1234XXXXXX456789@=VIA ESTABELECIMENTO/POS-12345678@
@@ -1633,7 +1642,7 @@ int iso_UpdateRevStruct(ISO_REV_MODAL_T * structMsg)
 	// 	SQLITE_FIELD_OPERATOR_NAME, operator_name, SQLITE_FIELD_RESPONSE_CODE , structMsg->responseCode, SQLITE_FIELD_NSU_ACQUIRER   , structMsg->acquirerNSU);
 	// sprintf (condition, "%s == '%s'", SQLITE_FIELD_NSU_HOST, structMsg->hostNSU);
 	// rc = db_sqLite_update (SQLITE_DB_DATABASE, SQLITE_TABLE_TRANSACTIONS, fields, condition);
-	// printf("db_sqLite_update res = [%d]\n", rc);
+	// TRACE_DEBUG("db_sqLite_update res = [%d]", rc);
 
 	//Comprovante
 	// @=MASTERCARD@=CREDITO A VISTA@=1234XXXXXX456789@=VIA ESTABELECIMENTO/POS-12345678@
@@ -1792,8 +1801,8 @@ int iso_KeepAliveProcess(ISO_NET_MODAL_T * structMsgIn, ISO_NET_MODAL_T * struct
 	}
 	
 	if (strcmp(structMsgIn->versions.appVer, structMsgOut->versions.appVer)){
-		printf("structMsgIn->versions.appVer  [%s]\n", structMsgIn->versions.appVer);
-		printf("structMsgOut->versions.appVer [%s]\n", structMsgOut->versions.appVer);
+		TRACE_DEBUG("structMsgIn->versions.appVer  [%s]", structMsgIn->versions.appVer);
+		TRACE_DEBUG("structMsgOut->versions.appVer [%s]", structMsgOut->versions.appVer);
 		sprintf(structMsgOut->versions.hostPath, "%s/%s/%s/%s.%s", 
 			structMsgOut->versions.modelPOS,
 			"APP", 
@@ -1802,8 +1811,8 @@ int iso_KeepAliveProcess(ISO_NET_MODAL_T * structMsgIn, ISO_NET_MODAL_T * struct
 			(strncmp(structMsgIn->versions.modelPOS, MODEL_MP35, 4)) ? "bin" : "cy");
 		update = TRUE;
 	}else if (strcmp(structMsgIn->versions.firmwareVer, structMsgOut->versions.firmwareVer)){
-		printf("structMsgIn->versions.firmwareVer  [%s]\n", structMsgIn->versions.firmwareVer);
-		printf("structMsgOut->versions.firmwareVer [%s]\n", structMsgOut->versions.firmwareVer);
+		TRACE_DEBUG("structMsgIn->versions.firmwareVer  [%s]", structMsgIn->versions.firmwareVer);
+		TRACE_DEBUG("structMsgOut->versions.firmwareVer [%s]", structMsgOut->versions.firmwareVer);
 		//./MP35/FW/4.7.1/4.6.8_to_4.7.1.up
 		sprintf(structMsgOut->versions.hostPath, "%s/%s/%s/%s_to_%s.%s", 
 			structMsgOut->versions.modelPOS,
@@ -1969,7 +1978,7 @@ int iso_ReversalMockup(ISO_REV_MODAL_T * structMsgIn, ISO_REV_MODAL_T * structMs
 		//PARSEAR BIT 90 e BUSCAR NO BANCO DE DADOS
 		result = utl_SQL_select_original_Transaction(structMsgIn->primalTrsData, origData, sizeof(origData));
 		if (!result){
-			printf("origData = [%s]\n", origData);
+			TRACE_DEBUG("origData = [%s]", origData);
 			strncpy(structMsgOut->responseCode , "00"				  , 2);  	// M
 		}else{
 			//SE NÃO ENCONTRAR RETORNAR 39 com "56 - No card record"

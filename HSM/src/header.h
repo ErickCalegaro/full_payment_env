@@ -54,6 +54,56 @@
 #define MAX_MSG 			1024
 #define HSM_PORT    		55556
 
+#define LOG_NONE    0
+#define LOG_FATAL   1
+#define LOG_ERROR   2    //PROD
+#define LOG_WARN    3    //HOMOLOG
+#define LOG_INFO    4    //DEV
+#define LOG_DEBUG   5    
+#define LOG_PATH    "../PUB/log_hsm.txt"
+
+#define LOG_LEVEL   LOG_INFO
+#define LOG_FILE    1   //LOGA EM ARQUIVO, OU CONSOLE
+
+
+#if (LOG_LEVEL == LOG_DEBUG)
+#define TRACE_DEBUG(fmt, ...) util_logger(LOG_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_INFO(fmt, ...) util_logger(LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_WARN(fmt, ...) util_logger(LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_INFO)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...) util_logger(LOG_INFO, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_WARN(fmt, ...) util_logger(LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_WARN)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...) util_logger(LOG_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_ERROR)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...)
+#define TRACE_ERROR(fmt, ...) util_logger(LOG_ERROR, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#elif (LOG_LEVEL == LOG_FATAL)
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...)
+#define TRACE_ERROR(fmt, ...)
+#define TRACE_FATAL(fmt, ...) util_logger(LOG_FATAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#else
+#define TRACE_DEBUG(fmt, ...)
+#define TRACE_INFO(fmt, ...)
+#define TRACE_WARN(fmt, ...)
+#define TRACE_ERROR(fmt, ...)
+#define TRACE_FATAL(fmt, ...)
+#endif
+
 typedef struct {
     char sKSN 		[20+1];            /* Key Sequence Number */
     char sPINBlock 	[16+1];            /* PIN Block */

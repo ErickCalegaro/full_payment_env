@@ -11,7 +11,7 @@
 #define SERVER_IP   "54.207.182.103"
 #endif
 
-#define PORT        7072
+#define PORT        7071
 #define BUFFER_SIZE 1024*5
 #define EXPECTED 	"pongcm"
 
